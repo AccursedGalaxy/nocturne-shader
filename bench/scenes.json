@@ -303,6 +303,21 @@
       ],
       "time": 18000,
       "desc": "grazing candidate"
+    },
+    {
+      "name": "grain-mirror",
+      "world": "kathis",
+      "pos": [
+        -181390.94,
+        64.0,
+        180615.1
+      ],
+      "rot": [
+        -136.3,
+        22.5
+      ],
+      "time": 18000,
+      "desc": "Robin's exact recursion viewpoint (RCON-saved): Zog between facing gold walls."
     }
   ]
 }
