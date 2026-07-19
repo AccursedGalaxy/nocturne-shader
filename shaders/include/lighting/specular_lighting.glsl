@@ -71,6 +71,15 @@ float get_NoH_squared(float NoL, float NoV, float LoV, float light_radius) {
     return clamp01(NoH * NoH / HoH);
 }
 
+// Nocturne: hue-preserving cap on reflected radiance. Bright animated
+// emissives (fire, glowstone) hit via the jittered SSR march otherwise
+// leave permanent grain that TAA cannot converge on.
+vec3 clamp_reflected_radiance(vec3 radiance) {
+    const vec3 lw = vec3(0.2126, 0.7152, 0.0722);
+    float lum = dot(radiance, lw);
+    return radiance * min(1.0, SSR_RADIANCE_CLAMP / max(lum, eps));
+}
+
 vec3 get_specular_highlight(
     Material material,
     float NoL,
@@ -376,7 +385,7 @@ vec3 get_specular_reflections(
         if (any(isnan(reflection))) {
             reflection = vec3(0.0); // don't reflect NaNs
         }
-        return reflection * material.ssr_multiplier;
+        return clamp_reflected_radiance(reflection) * material.ssr_multiplier;
     }
 #else
     // Fade reflection when rough reflections are disabled
@@ -426,7 +435,7 @@ vec3 get_specular_reflections(
         reflection = vec3(0.0); // don't reflect NaNs
     }
 
-    return reflection * material.ssr_multiplier;
+    return clamp_reflected_radiance(reflection) * material.ssr_multiplier;
 }
 
 #endif // INCLUDE_LIGHTING_SPECULAR_LIGHTING

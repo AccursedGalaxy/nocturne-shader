@@ -797,3 +797,4 @@ option.CLOUDS_CUMULUS_DENSITY.comment  = How thick the low clouds look.
 option.FXAA.comment                    = Extra edge smoothing after TAA. Nocturne ships it OFF: TAA already covers it and the image is sharper without it.
 option.SUN_ANGULAR_RADIUS.comment      = Visible size of the sun disc, in degrees. Also controls how large sun reflections on blocks and water are. Real sun is about 0.3; Nocturne default is 1.0 (stock Photon used 2.0, which made sun glints look like flat yellow circles).
 option.MOON_ANGULAR_RADIUS.comment     = Visible size of the moon disc, in degrees. Also affects moon glints on smooth surfaces.
+option.SSR_RADIANCE_CLAMP.comment      = Caps how bright things can appear in block reflections. Low values kill the grainy noise around reflected fire and glowstone but dim those reflections; high values keep bright reflections and the grain. Nocturne default: 6.
