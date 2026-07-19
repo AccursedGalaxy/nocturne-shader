@@ -51,6 +51,12 @@ bool raymarch_depth_buffer(
 
     bool hit = false;
 
+    // Nocturne: a ray may only hit once it has been strictly in front of
+    // the depth buffer - rays hugging their own surface at grazing angles
+    // otherwise re-intersect it at periodic step boundaries, painting
+    // ladder-like self-reflection bands on flat mirrors.
+    bool been_in_front = false;
+
     // Intersection loop
 
     for (int i = 0; i < intersection_step_count; ++i, ray_pos += ray_step) {
@@ -70,7 +76,9 @@ bool raymarch_depth_buffer(
         )
                           .x;
 
-        if (depth < ray_pos.z &&
+        been_in_front = been_in_front || depth > ray_pos.z;
+
+        if (been_in_front && depth < ray_pos.z &&
             abs(depth_tolerance - (ray_pos.z - depth)) < depth_tolerance) {
             hit = true;
             break;

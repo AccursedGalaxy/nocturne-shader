@@ -469,7 +469,7 @@ vec3 get_specular_reflections(
         view_pos,
         world_pos,
         ray_dir,
-        dither,
+        0.5,
         skylight,
         SSR_INTERSECTION_STEPS_SMOOTH,
         SSR_REFINEMENT_STEPS,
