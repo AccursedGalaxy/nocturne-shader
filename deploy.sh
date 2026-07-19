@@ -54,6 +54,9 @@ TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
 git archive "$REF" | tar -x -C "$TMP"
 printf '%s (commit %s, deployed %s)\n' "$DESC" "$(git rev-parse --short "$REF")" "$(date +%F)" > "$TMP/version.txt"
+# stamp the version into the in-game About line (Nocturne Look screen)
+sed -i "s/§5Nocturne§7 · base by SixthSurge/§5Nocturne ${DESC}§7 · SixthSurge/" \
+    "$TMP/shaders/lang/en_US.lang"
 ( cd "$TMP" && zip -q -r pack.zip shaders LICENSE NOCTURNE.md version.txt $( [[ -d tools ]] && echo tools ) -x '*/__pycache__/*' )
 
 for inst in "${TARGETS[@]}"; do
