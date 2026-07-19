@@ -434,7 +434,7 @@ vec3 get_specular_reflections(
     // hard speckle (confirmed via path-tint debug: opaque pass). Real
     // metal blocks are brushed, not mirror-polished. With a labPBR pack
     // (SPECULAR_MAPPING) the proper rough path handles this instead.
-    int mirror_mip = material.is_metal ? 2 : 0;
+    int mirror_mip = material.is_metal ? 4 : 0; // DEBUG: unmistakable blur test
 #else
     const int mirror_mip = 0;
 #endif
