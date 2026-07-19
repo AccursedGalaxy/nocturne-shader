@@ -427,6 +427,14 @@ vec3 get_specular_reflections(
     // high-contrast target (fire on dark blocks) speckles hard at mip 0,
     // and glass is not a perfect mirror anyway. Water stays at mip 0.
     int mirror_mip = is_water ? 0 : 2;
+#elif !defined SPECULAR_MAPPING
+    // Nocturne: hardcoded metals (gold, iron, copper blocks) get a
+    // prefiltered reflection too. Their per-texel smoothness heuristic
+    // plus a single mirror ray reflecting animated emissives produces
+    // hard speckle (confirmed via path-tint debug: opaque pass). Real
+    // metal blocks are brushed, not mirror-polished. With a labPBR pack
+    // (SPECULAR_MAPPING) the proper rough path handles this instead.
+    int mirror_mip = material.is_metal ? 2 : 0;
 #else
     const int mirror_mip = 0;
 #endif
