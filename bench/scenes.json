@@ -258,6 +258,51 @@
       ],
       "time": 6000,
       "desc": "grain-A at noon - daytime regression check"
+    },
+    {
+      "name": "grain-graze1",
+      "world": "kathis",
+      "pos": [
+        -181390.5,
+        63.8,
+        180613.0
+      ],
+      "rot": [
+        -70.0,
+        3.0
+      ],
+      "time": 18000,
+      "desc": "grazing candidate"
+    },
+    {
+      "name": "grain-graze2",
+      "world": "kathis",
+      "pos": [
+        -181389.0,
+        63.8,
+        180616.5
+      ],
+      "rot": [
+        -120.0,
+        5.0
+      ],
+      "time": 18000,
+      "desc": "grazing candidate"
+    },
+    {
+      "name": "grain-graze3",
+      "world": "kathis",
+      "pos": [
+        -181391.5,
+        63.8,
+        180611.5
+      ],
+      "rot": [
+        -45.0,
+        3.0
+      ],
+      "time": 18000,
+      "desc": "grazing candidate"
     }
   ]
 }
