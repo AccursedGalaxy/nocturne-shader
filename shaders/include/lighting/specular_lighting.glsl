@@ -261,7 +261,7 @@ vec3 trace_specular_ray(
         vec2 hit_uv_prev =
             reproject_scene_space(hit_pos_scene, false, false).xy;
         if (clamp01(hit_uv_prev) != hit_uv_prev) {
-            return sky_reflection * vec3(3.0, 0.2, 3.0); // DEBUG offscreen->magenta
+            return sky_reflection;
         }
 
         vec3 reflection = textureLod(colortex5, hit_uv_prev, mip_level).rgb;
@@ -292,9 +292,9 @@ vec3 trace_specular_ray(
         reflection = reflection * analytic_fog[1] + analytic_fog[0];
 #endif
 
-        return mix(sky_reflection * vec3(3.0, 0.2, 3.0), reflection, border_attenuation); // DEBUG border->magenta
+        return mix(sky_reflection, reflection, border_attenuation);
     } else {
-        return sky_reflection * vec3(3.0, 0.2, 3.0); // DEBUG miss->magenta
+        return sky_reflection;
     }
 }
 
