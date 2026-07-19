@@ -136,11 +136,19 @@ def unfocus_game(addr):
     active = hypr("activewindow", json_out=True) or {}
     if active.get("address") != addr:
         return
+    # Only hand focus to a window the user can currently SEE - focusing
+    # anything else (e.g. Prism on another workspace) yanks their view.
+    visible_ws = {
+        m.get("activeWorkspace", {}).get("id")
+        for m in hypr("monitors", json_out=True)
+        if m["name"] != OUTPUT
+    }
     other = next(
         (
             c["address"]
             for c in hypr("clients", json_out=True)
-            if c["address"] != addr and c.get("monitor", -1) != -1
+            if c["address"] != addr
+            and c.get("workspace", {}).get("id") in visible_ws
         ),
         None,
     )
