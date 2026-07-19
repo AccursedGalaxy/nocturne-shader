@@ -7,6 +7,7 @@
 #include "/include/sky/projection.glsl"
 #include "/include/surface/material.glsl"
 #include "/include/utility/bicubic.glsl"
+#include "/include/utility/encoding.glsl"
 #include "/include/utility/dithering.glsl"
 #include "/include/utility/random.glsl"
 #include "/include/utility/sampling.glsl"
@@ -269,6 +270,25 @@ vec3 trace_specular_ray(
         // colortex5 are silently ignored (verified: mip 4 == mip 0), so
         // the prefilter must be explicit taps. Kills per-pixel speckle
         // from reflected animated emissives (fire) on gold/iron/copper.
+        float bounce_damp = 1.0;
+#if defined PROGRAM_DEFERRED4 && !defined SPECULAR_MAPPING
+        // Nocturne: recursion damping. The hit sample comes from the
+        // previous frame, which already contains reflections - metal
+        // reflecting metal feeds back frame over frame into smeared
+        // hall-of-mirrors echoes (coherent march made this visible;
+        // dither used to scramble it into noise). If the hit surface is
+        // itself a metal block, dim its contribution so the recursion
+        // converges after ~2 bounces instead of accumulating.
+        {
+            ivec2 hit_texel = ivec2(hit_pos.xy * view_res * taau_render_scale);
+            vec2 hit_data = unpack_unorm_2x8(texelFetch(colortex1, hit_texel, 0).y);
+            uint hit_mask = uint(255.0 * hit_data.y);
+            if (hit_mask == 12u || hit_mask == 18u) {
+                bounce_damp = 0.35;
+            }
+        }
+#endif
+
         vec3 reflection;
         if (mip_level < 0) {
             // 9-tap box, +-4px: wide enough to smear both march banding
@@ -312,7 +332,7 @@ vec3 trace_specular_ray(
             fog_shadow
         );
 
-        reflection = max0(reflection - fog_scattering_previous);
+        reflection = max0(reflection - fog_scattering_previous) * bounce_damp;
         reflection = reflection * analytic_fog[1] + analytic_fog[0];
 #endif
 
