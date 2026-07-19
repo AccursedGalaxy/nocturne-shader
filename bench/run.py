@@ -422,12 +422,15 @@ def cmd_scout(args):
                 # single shared template ("scout") so generated chunks
                 # accumulate across points instead of regenerating
                 sc = {
-                    "name": "scout",
-                    "seed": args.seed,
+                    "name": "scout-" + args.world if args.world else "scout",
                     "pos": [x, args.y, z],
                     "rot": [yaw, args.pitch],
                     "time": args.time,
                 }
+                if args.world:
+                    sc["world"] = args.world
+                else:
+                    sc["seed"] = args.seed
                 out = run_dir / f"{i:02d}-{x}_{z}-y{yaw}"
                 run_one(sc, args.shader, out, "shot", args.warmup, 0, 1, prewarm=True)
     finally:
@@ -436,11 +439,80 @@ def cmd_scout(args):
     print(run_dir)
 
 
+TIME_NAMES = {
+    "dawn": 23000,
+    "sunrise": 400,
+    "morning": 1000,
+    "noon": 6000,
+    "afternoon": 9000,
+    "dusk": 12300,
+    "sunset": 12300,
+    "night": 15000,
+    "midnight": 18000,
+}
+
+
+def parse_time(v):
+    return TIME_NAMES[v] if v in TIME_NAMES else int(v)
+
+
+def cmd_import(args):
+    dest, info = scenelib.import_world(args.zip, args.name)
+    log(f"imported {dest.name}: version={info['version']} spawn={info['spawn']}")
+    log(f"next: nb open {args.name}")
+
+
+def cmd_import(args):
+    dest, info = scenelib.import_world(args.zip, args.name)
+    log(f"imported {dest.name}: version={info['version']} spawn={info['spawn']}")
+    log(f"next: nb open {args.name}")
+
+
+def cmd_open(args):
+    dest = scenelib.open_for_editing(args.world)
+    log(f"world ready: {dest.name} (CoupleTime instance, creative)")
+    log("fly to a viewpoint, press Esc (pause = save), then run:")
+    log(f"  nb mark <scene-name> --world {args.world} --time dusk")
+
+
+def cmd_mark(args):
+    save = scenelib.edit_save_dir(args.world)
+    if not save.exists():
+        raise SystemExit(f"no edit save for {args.world!r} — run: nb open {args.world}")
+    pos, rot = scenelib.read_player_view(save)
+    scene = {
+        "name": args.name,
+        "world": args.world,
+        "pos": pos,
+        "rot": rot,
+        "time": parse_time(args.time),
+    }
+    if args.desc:
+        scene["desc"] = args.desc
+    path = BENCH / "scenes.json"
+    data = json.loads(path.read_text())
+    data["scenes"] = [s for s in data["scenes"] if s["name"] != args.name]
+    data["scenes"].append(scene)
+    path.write_text(json.dumps(data, indent=2) + "\n")
+    log(f"marked {args.name}: pos={pos} rot={rot} time={scene['time']}")
+    if args.shoot:
+        stamp = dt.datetime.now().strftime("%Y%m%d-%H%M%S")
+        out = BENCH / "runs" / f"{stamp}-mark-{sanitize(args.name)}"
+        ensure_output()
+        try:
+            run_one(
+                scene, args.shader, out / sanitize(args.name), "shot", args.warmup, 0, 1
+            )
+        finally:
+            remove_output()
+        log(f"preview: {out}")
+
+
 def cmd_list(args):
     for name, sc in scenelib.load_scenes().items():
         print(
-            f"{name:16s} seed={sc['seed']} pos={sc['pos']} "
-            f"time={sc['time']} {sc.get('desc', '')}"
+            f"{name:24s} {'world=' + sc['world'] if sc.get('world') else 'seed=' + str(sc.get('seed'))} "
+            f"pos={sc['pos']} time={sc['time']} {sc.get('desc', '')}"
         )
 
 
@@ -469,7 +541,10 @@ def main():
 
     p = sub.add_parser("scout", help="screenshot candidate viewpoints")
     p.add_argument("--points", required=True, help="'x,z;x,z;...'")
-    p.add_argument("--seed", type=int, required=True)
+    p.add_argument("--seed", type=int)
+    p.add_argument(
+        "--world", help="scout an existing world from worlds-src/ instead of a seed"
+    )
     p.add_argument("--y", type=int, default=160)
     p.add_argument("--yaw", type=int, default=0)
     p.add_argument("--pitch", type=int, default=15)
@@ -478,6 +553,31 @@ def main():
     p.add_argument("--shader", default="Photon Nocturne.zip")
     p.add_argument("--warmup", type=int, default=20)
     p.set_defaults(fn=cmd_scout)
+
+    p = sub.add_parser("import", help="import a downloaded map zip into worlds-src")
+    p.add_argument("zip")
+    p.add_argument("--name", required=True)
+    p.set_defaults(fn=cmd_import)
+
+    p = sub.add_parser(
+        "open", help="install a world into CoupleTime for viewpoint picking"
+    )
+    p.add_argument("world")
+    p.set_defaults(fn=cmd_open)
+
+    p = sub.add_parser(
+        "mark", help="save current player view in an edit world as a scene"
+    )
+    p.add_argument("name")
+    p.add_argument("--world", required=True)
+    p.add_argument(
+        "--time", default="noon", help="tick or name (dawn/noon/dusk/night/midnight...)"
+    )
+    p.add_argument("--desc", default="")
+    p.add_argument("--shoot", action="store_true", help="take a 4K preview right away")
+    p.add_argument("--shader", default="Photon Nocturne.zip")
+    p.add_argument("--warmup", type=int, default=25)
+    p.set_defaults(fn=cmd_mark)
 
     p = sub.add_parser("list", help="list scenes")
     p.set_defaults(fn=cmd_list)

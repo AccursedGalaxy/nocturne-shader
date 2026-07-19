@@ -159,20 +159,78 @@ def template_dir(scene_name):
     return BENCH / "worlds" / scene_name
 
 
+def patch_level_dat(path, scene):
+    """Patch an *existing* world's level.dat in place: our spectator
+    viewpoint, frozen time/weather, determinism gamerules — and strip
+    datapack entries whose packs aren't shipped with the save (ghost
+    entries trigger Minecraft's blocking safe-mode prompt)."""
+    import nbtlib
+    from nbtlib import Compound as C
+
+    x, y, z = scene["pos"]
+    yaw, pitch = scene["rot"]
+    f = nbtlib.load(str(path))
+    d = f["Data"] if "Data" in f else f[""]["Data"]
+    d["GameType"] = Int(3)
+    d["Difficulty"] = Byte(0)
+    d["allowCommands"] = Byte(1)
+    d["DayTime"] = Long(scene["time"])
+    d["raining"] = Byte(1 if scene.get("weather") == "rain" else 0)
+    d["thundering"] = Byte(0)
+    d["rainTime"] = Int(999999999)
+    d["clearWeatherTime"] = Int(0 if scene.get("weather") == "rain" else 999999999)
+    gr = d.get("GameRules") or C({})
+    for k, v in GAMERULES.items():
+        gr[k] = String(v)
+    d["GameRules"] = gr
+    if "DataPacks" in d:
+        d["DataPacks"]["Enabled"] = List[String]([String("vanilla"), String("fabric")])
+        d["DataPacks"]["Disabled"] = List[String]([])
+    player = d.get("Player") or C({})
+    player["Pos"] = List[Double]([Double(x), Double(y), Double(z)])
+    player["Rotation"] = List[Float]([Float(yaw), Float(pitch)])
+    player["Motion"] = List[Double]([Double(0)] * 3)
+    player["Dimension"] = String("minecraft:overworld")
+    player["playerGameType"] = Int(3)
+    player["previousPlayerGameType"] = Int(1)
+    player["Invulnerable"] = Byte(1)
+    ab = player.get("abilities") or C({})
+    ab["flying"] = Byte(1)
+    ab["mayfly"] = Byte(1)
+    ab["invulnerable"] = Byte(1)
+    player["abilities"] = ab
+    d["Player"] = player
+    f.save(str(path))
+
+
 def bake_template(scene, force=False):
-    """Create/refresh the template save for a scene. Keeps existing region
-    files (pregenerated chunks) unless the seed changed or force=True."""
+    """Create/refresh the template save for a scene.
+
+    Seed scenes: hand-built level.dat; region files (pregenerated chunks)
+    are kept unless the seed changed or force=True.
+    World scenes ({"world": "<name>"}): copy bench/worlds-src/<name>/ once,
+    then patch its level.dat with the scene's viewpoint/time/gamerules."""
     tdir = template_dir(scene["name"])
     meta_path = tdir / "nbench-scene.json"
+    world = scene.get("world")
     if tdir.exists():
         old = json.loads(meta_path.read_text()) if meta_path.exists() else {}
-        if force or old.get("seed") != scene["seed"]:
-            shutil.rmtree(tdir)  # seed changed: cached chunks are invalid
-    tdir.mkdir(parents=True, exist_ok=True)
-    level_dat(scene).save(str(tdir / "level.dat"))
-    # Also refresh the player inside level.dat even when chunks are kept:
-    # after a prewarm run MC rewrites level.dat with live state, so re-baking
-    # restores the canonical viewpoint/time while region/ stays cached.
+        stale = old.get("seed") != scene.get("seed") or old.get("world") != world
+        if force or stale:
+            shutil.rmtree(tdir)
+    if world:
+        src = BENCH / "worlds-src" / world
+        if not src.is_dir():
+            raise SystemExit(f"world source missing: {src}")
+        if not tdir.exists():
+            shutil.copytree(src, tdir)
+        patch_level_dat(tdir / "level.dat", scene)
+    else:
+        tdir.mkdir(parents=True, exist_ok=True)
+        # Refresh level.dat even when chunks are kept: after a prewarm run
+        # MC rewrites it with live state; re-baking restores the canonical
+        # viewpoint/time while region/ stays cached.
+        level_dat(scene).save(str(tdir / "level.dat"))
     meta_path.write_text(json.dumps(scene, indent=2))
     (tdir / "session.lock").unlink(missing_ok=True)
     return tdir
@@ -193,3 +251,104 @@ def install(scene, saves_dir, run_on_template=False):
     else:
         shutil.copytree(tdir, dest)
     return name
+
+
+COUPLETIME_SAVES = (
+    Path.home()
+    / ".local/opt/prismlauncher/instances/CoupleTime/minecraft/saves"
+)
+
+
+def edit_save_dir(world):
+    return COUPLETIME_SAVES / f"nbench-edit-{world}"
+
+
+def open_for_editing(world):
+    """Copy a worlds-src world into the CoupleTime instance's saves as
+    'nbench-edit-<world>' (creative, cheats, NOT spectator-patched) so
+    Robin can fly around and pick viewpoints in his own instance. Reopening
+    keeps the existing copy (and thus his last position)."""
+    src = BENCH / "worlds-src" / world
+    if not src.is_dir():
+        raise SystemExit(
+            f"unknown world {world!r}; available: "
+            + ", ".join(p.name for p in (BENCH / "worlds-src").iterdir())
+        )
+    dest = edit_save_dir(world)
+    if not dest.exists():
+        shutil.copytree(src, dest)
+        import nbtlib
+        f = nbtlib.load(str(dest / "level.dat"))
+        d = f["Data"]
+        d["GameType"] = Int(1)  # creative for free flight
+        d["allowCommands"] = Byte(1)
+        d["LevelName"] = String(f"nbench-edit-{world}")
+        if "DataPacks" in d:
+            d["DataPacks"]["Enabled"] = List[String](
+                [String("vanilla"), String("fabric")]
+            )
+            d["DataPacks"]["Disabled"] = List[String]([])
+        if "Player" in d:
+            d["Player"]["playerGameType"] = Int(1)
+        f.save(str(dest / "level.dat"))
+    (dest / "session.lock").unlink(missing_ok=True)
+    return dest
+
+
+def read_player_view(save_dir):
+    """Player position/rotation from a save's level.dat (updated whenever
+    the game saves — pausing with Esc is enough)."""
+    import nbtlib
+
+    f = nbtlib.load(str(Path(save_dir) / "level.dat"))
+    pl = f["Data"]["Player"]
+    pos = [round(float(v), 1) for v in pl["Pos"]]
+    yaw, pitch = (round(float(v), 1) for v in pl["Rotation"])
+    yaw = ((yaw + 180) % 360) - 180  # normalize
+    return pos, [yaw, pitch]
+
+
+JUNK_DIRS = {
+    "playerdata", "players", "stats", "advancements", "serverconfig",
+    "ftbchunks", "ftbessentials", "ftbquests", "ftbteams", "easy_npc",
+    "DIM-1", "DIM1", "dimensions", "__MACOSX",
+}
+
+
+def import_world(zip_path, name):
+    """Unpack a downloaded map zip into worlds-src/<name>. Finds the world
+    root (the dir containing level.dat) wherever it sits in the archive,
+    strips per-player/mod junk, and clears ghost datapack entries."""
+    import tempfile
+    import zipfile
+
+    dest = BENCH / "worlds-src" / name
+    if dest.exists():
+        raise SystemExit(f"worlds-src/{name} already exists")
+    with tempfile.TemporaryDirectory(dir=BENCH) as tmp:
+        with zipfile.ZipFile(zip_path) as z:
+            z.extractall(tmp)
+        roots = [p.parent for p in Path(tmp).rglob("level.dat")]
+        if not roots:
+            raise SystemExit("no level.dat found in the archive")
+        root = min(roots, key=lambda p: len(p.parts))
+        for junk in JUNK_DIRS:
+            shutil.rmtree(root / junk, ignore_errors=True)
+        (root / "session.lock").unlink(missing_ok=True)
+        (root / "level.dat_old").unlink(missing_ok=True)
+        shutil.move(str(root), dest)
+
+    import nbtlib
+    f = nbtlib.load(str(dest / "level.dat"))
+    d = f["Data"]
+    info = {
+        "version": str(d.get("Version", {}).get("Name", "?")),
+        "spawn": [int(d["SpawnX"]), int(d["SpawnY"]), int(d["SpawnZ"])],
+    }
+    if "DataPacks" in d:
+        d["DataPacks"]["Enabled"] = List[String](
+            [String("vanilla"), String("fabric")]
+        )
+        d["DataPacks"]["Disabled"] = List[String]([])
+        f.save(str(dest / "level.dat"))
+    return dest, info

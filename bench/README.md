@@ -40,6 +40,26 @@ so runs never mutate it. `nb prewarm` runs on the template itself
 (symlinked) so generated chunks persist; re-bake restores the canonical
 viewpoint afterwards.
 
+## Adding hero scenes from downloaded builds
+
+Blind coordinate scouting works for terrain but not for finding builds.
+The intended loop for close-up/README-header shots:
+
+```sh
+bench/nb import ~/Downloads/some-map.zip --name castle   # unpack into worlds-src/
+bench/nb open castle          # copy into CoupleTime saves as nbench-edit-castle
+# ... open that world in Prism/CoupleTime, fly to a great angle, press Esc
+bench/nb mark castle-gate --world castle --time dusk --shoot
+# reads your exact position+camera from the save, adds the scene, 4K preview
+```
+
+`--time` accepts names (dawn/sunrise/morning/noon/afternoon/dusk/night/
+midnight) or raw ticks; add 24000×N to pick a different in-game day (cloud
+coverage varies per day — that's how V6 got a clear galaxy sky). Direct
+map downloads are Cloudflare-gated, so grab zips in the browser
+(minecraftmaps.com, planetminecraft.com) and feed them to `nb import`.
+The Build Ideas world from CoupleTime is already imported as `buildideas`.
+
 ## Scenes
 
 Defined in `scenes.json`: `name`, `seed`, `pos [x,y,z]`, `rot [yaw,pitch]`,
