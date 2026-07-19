@@ -48,13 +48,30 @@ def log(msg):
 
 
 # ---------------------------------------------------------------- hyprland
+_HYPR_SIG = None
+
+
 def _hypr_env():
+    """Env with a *verified-live* Hyprland signature (the inherited one may
+    be from a dead session)."""
+    global _HYPR_SIG
     env = dict(os.environ)
-    if "HYPRLAND_INSTANCE_SIGNATURE" not in env:
+    if _HYPR_SIG is None:
         d = Path("/run/user/%d/hypr" % os.getuid())
-        sigs = sorted(d.iterdir(), key=lambda p: p.stat().st_mtime)
-        if sigs:
-            env["HYPRLAND_INSTANCE_SIGNATURE"] = sigs[-1].name
+        candidates = [env.get("HYPRLAND_INSTANCE_SIGNATURE")] + [
+            p.name
+            for p in sorted(d.iterdir(), key=lambda p: p.stat().st_mtime, reverse=True)
+            if d.exists()
+        ]
+        for sig in filter(None, candidates):
+            probe = dict(env, HYPRLAND_INSTANCE_SIGNATURE=sig)
+            r = subprocess.run(["hyprctl", "monitors"], capture_output=True, env=probe)
+            if r.returncode == 0:
+                _HYPR_SIG = sig
+                break
+        else:
+            raise RuntimeError("no live Hyprland session found")
+    env["HYPRLAND_INSTANCE_SIGNATURE"] = _HYPR_SIG
     return env
 
 
@@ -102,17 +119,50 @@ def find_window(java_pid, timeout=30):
     return None
 
 
+def window_geom(addr):
+    for c in hypr("clients", json_out=True):
+        if c["address"] == addr:
+            return tuple(c["at"]), tuple(c["size"])
+    return None, None
+
+
+WORKSPACE = "name:nbench"
+
+
 def place_window(addr):
-    hypr("dispatch", "setfloating", f"address:{addr}")
-    hypr(
-        "dispatch",
-        "movewindowpixel",
-        f"exact {OUTPUT_POS[0]} {OUTPUT_POS[1]},address:{addr}",
-    )
-    hypr("dispatch", "resizewindowpixel", f"exact {RES[0]} {RES[1]},address:{addr}")
+    """Send the window to a dedicated workspace on the headless output and
+    fullscreen it there — pixel-exact float placement of xwayland windows
+    across outputs proved unreliable. Fullscreening needs focus, so focus
+    is borrowed for a moment and handed straight back."""
+    prev = hypr("activewindow", json_out=True).get("address")
+    hypr("dispatch", "movetoworkspacesilent", f"{WORKSPACE},address:{addr}")
+    hypr("dispatch", "moveworkspacetomonitor", f"{WORKSPACE} {OUTPUT}")
+    for attempt in range(10):
+        c = next(
+            (c for c in hypr("clients", json_out=True) if c["address"] == addr),
+            {},
+        )
+        if not c.get("fullscreen"):
+            hypr("dispatch", "focuswindow", f"address:{addr}")
+            hypr("dispatch", "fullscreen", "0")
+            time.sleep(1)
+            if prev and prev != addr:
+                hypr("dispatch", "focuswindow", f"address:{prev}")
+            c = next(
+                (c for c in hypr("clients", json_out=True) if c["address"] == addr),
+                {},
+            )
+        if c.get("fullscreen") and tuple(c.get("size", ())) == RES:
+            log(f"window fullscreen on {OUTPUT} at {c['at']} size {c['size']}")
+            return
+        log(f"fullscreen not settled: at={c.get('at')} size={c.get('size')}, retry")
+        time.sleep(2)
+    raise RuntimeError("window never reached fullscreen 4K on " + OUTPUT)
 
 
-def screenshot(dest):
+def screenshot(addr, dest):
+    """Capture the headless output — the game is fullscreen on it, above
+    any bars, so the capture is exactly the 4K framebuffer."""
     subprocess.run(["grim", "-o", OUTPUT, str(dest)], check=True, env=_hypr_env())
     log(f"screenshot -> {dest}")
 
@@ -150,21 +200,28 @@ def mangohud_conf(out_dir):
         f"output_folder={out_dir}\n"
         "log_interval=0\n"
         "log_duration=14400\n"
-        "autostart_log=1\n"
-        "no_display=1\n"
+        "autostart_log=15\n"
+        "fps\n"
+        "frametime\n"
+        "position=top-left\n"
+        "font_size=20\n"
+        "background_alpha=0.4\n"
     )
     return conf
 
 
 def bench_java_pid():
-    r = subprocess.run(
-        ["pgrep", "-f", "instances/NocturneBench/minecraft"],
-        capture_output=True,
-        text=True,
-    )
-    pids = [int(p) for p in r.stdout.split()]
-    me = os.getpid()
-    return next((p for p in pids if p != me), None)
+    """The game process: a java process whose cwd is the instance's
+    minecraft dir (Prism passes launch params via stdin, so the cmdline
+    doesn't name the instance reliably)."""
+    r = subprocess.run(["pgrep", "-x", "java"], capture_output=True, text=True)
+    for p in r.stdout.split():
+        try:
+            if os.readlink(f"/proc/{p}/cwd") == str(MC_DIR):
+                return int(p)
+        except OSError:
+            continue
+    return None
 
 
 def wait_for_java(timeout=90):
@@ -229,8 +286,12 @@ def run_one(sc, shader, out_dir, mode, warmup, duration, shots, prewarm=False):
 
     save_name = scenelib.install(sc, MC_DIR / "saves", run_on_template=prewarm)
     set_shader(shader)
-    perf = mode in ("perf", "both") and not prewarm
+    # MangoHud logging needs the overlay rendered (no_display kills the GL
+    # logger), so perf sessions carry the overlay and never take screenshots;
+    # cmd_run expands mode=both into a shot session + a perf session.
+    perf = mode == "perf" and not prewarm
     write_run_env(mangohud_conf(out_dir) if perf else None)
+    autostart = 15  # keep in sync with mangohud_conf
 
     log_file = MC_DIR / "logs/latest.log"
     log_offset = 0  # latest.log is rotated per session; read from start
@@ -242,6 +303,7 @@ def run_one(sc, shader, out_dir, mode, warmup, duration, shots, prewarm=False):
         "warmup": warmup,
         "duration": duration,
         "res": RES,
+        "mangohud_autostart": autostart if perf else None,
         "t_launch": time.time(),
     }
     log(f"launching scene={sc['name']} shader={shader}")
@@ -281,9 +343,9 @@ def run_one(sc, shader, out_dir, mode, warmup, duration, shots, prewarm=False):
         time.sleep(warmup)
         meta["t_measure_start"] = time.time()
 
-        if mode in ("shot", "both") or prewarm:
+        if mode == "shot" or prewarm:
             for i in range(shots):
-                screenshot(out_dir / f"shot-{i:02d}.png")
+                screenshot(addr, out_dir / f"shot-{i:02d}.png")
                 if i + 1 < shots:
                     time.sleep(2)
         if perf:
@@ -315,12 +377,14 @@ def cmd_run(args):
     run_dir = BENCH / "runs" / f"{stamp}-{sanitize(args.label)}"
     ensure_output()
     try:
+        modes = ["shot", "perf"] if args.mode == "both" else [args.mode]
         for shader in shaders:
             for sc in picked:
                 out = run_dir / sanitize(shader) / sc["name"]
-                run_one(
-                    sc, shader, out, args.mode, args.warmup, args.duration, args.shots
-                )
+                for mode in modes:
+                    run_one(
+                        sc, shader, out, mode, args.warmup, args.duration, args.shots
+                    )
     finally:
         if not args.keep_output:
             remove_output()
@@ -355,16 +419,17 @@ def cmd_scout(args):
     try:
         for i, (x, z) in enumerate(pts):
             for yaw in (0, 90, 180, 270) if args.pan else (args.yaw,):
+                # single shared template ("scout") so generated chunks
+                # accumulate across points instead of regenerating
                 sc = {
-                    "name": f"scout-{i:02d}-y{yaw}",
+                    "name": "scout",
                     "seed": args.seed,
                     "pos": [x, args.y, z],
                     "rot": [yaw, args.pitch],
                     "time": args.time,
                 }
                 out = run_dir / f"{i:02d}-{x}_{z}-y{yaw}"
-                run_one(sc, args.shader, out, "shot", args.warmup, 0, 1)
-                shutil.rmtree(scenelib.template_dir(sc["name"]), ignore_errors=True)
+                run_one(sc, args.shader, out, "shot", args.warmup, 0, 1, prewarm=True)
     finally:
         remove_output()
     log(f"scout complete: {run_dir}")
