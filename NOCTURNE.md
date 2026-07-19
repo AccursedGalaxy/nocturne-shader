@@ -107,3 +107,33 @@ matches exactly once). Files changed vs v1.0: shaders/settings.glsl,
 shaders/lang/en_US.lang, NOCTURNE.md, + added tools/. The v1.1 zip's own
 sha256 is published next to it as "Photon Nocturne v1.1.zip.sha256" (a zip
 cannot contain its own hash).
+
+---
+
+# v1.2 — measured optimization round 1 (2026-07-19)
+
+Driven by the cost-attribution experiments (6 in-game runs, perflogs/
+experiment): baseline 6.65 ms median; VL fog and clouds each ~0.69 ms
+(10.4%); shadows/SSR at the noise floor; GTAO free; ~63% of the frame is
+the base render.
+
+## Changes
+1. VL fog march capped at 16 steps (was 25) — light shafts are half-res,
+   dithered, and low-frequency; the fog density integral is analytic and
+   unaffected. (fog/overworld/constants.glsl)
+2. VL fog march early-exits once transmittance saturates — steps behind
+   opaque fog were pure waste. Free win. (fog/overworld/raymarched.glsl)
+3. FXAA off by default — it ran after TAA (already anti-aliased) and
+   before CAS (re-sharpens). One full-screen pass saved, slightly sharper
+   image. QUALITY-POSITIVE. Re-enable: Post-Processing → FXAA.
+
+## Acceptance (pending)
+- Perf: median frametime v1.2 < v1.1 by ≥3% on matched-environment
+  sessions (perfbench compare), else no claim ships.
+- Quality: V6 night-fog scene (shaft banding at fog edges is the one risk
+  from change 1), plus edge crawl check on high-contrast edges (change 3).
+
+## Provenance
+Source: Photon Nocturne v1.1.zip sha256 d43ed6ec5acb0541adb6dc5c2b2f11d3
+5dda0e11bf809c952483cbc0a88e3eda; patch: tools/nocturne-v1.2.patch.py
+(in this zip). v1.2 zip sha256: sibling .sha256 file.

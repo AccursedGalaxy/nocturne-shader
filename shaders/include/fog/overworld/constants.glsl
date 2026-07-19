@@ -2,7 +2,7 @@
 #define INCLUDE_FOG_OVERWORLD_CONSTANTS
 
 const uint air_fog_min_step_count = 8;
-const uint air_fog_max_step_count = 25;
+const uint air_fog_max_step_count = 16;
 const float air_fog_step_count_growth = 0.1;
 const float air_fog_volume_top = 320.0;
 const float air_fog_volume_bottom = SEA_LEVEL - 24.0;

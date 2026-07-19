@@ -162,6 +162,11 @@ mat2x3 raymarch_air_fog(
         light_sky[1] += visible_scattering * density.y;
 
         transmittance *= step_transmittance;
+
+        // fog ahead is already opaque - nothing further contributes
+        if (max_of(transmittance) < 0.01) {
+            break;
+        }
     }
 
     light_sun[0] *= fog_params.rayleigh_scattering_coeff;
