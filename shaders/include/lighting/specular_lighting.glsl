@@ -421,6 +421,16 @@ vec3 get_specular_reflections(
     float v1 = v1_smith_ggx(NoV, alpha_squared);
     float v2 = v2_smith_ggx(NoL, NoV, alpha_squared);
 
+#if defined PROGRAM_GBUFFERS_WATER || defined PROGRAM_GBUFFERS_HAND_WATER
+    // Nocturne: glass and other non-water translucents reflect a
+    // prefiltered mip of the scene. One grazing ray per pixel over a
+    // high-contrast target (fire on dark blocks) speckles hard at mip 0,
+    // and glass is not a perfect mirror anyway. Water stays at mip 0.
+    int mirror_mip = is_water ? 0 : 2;
+#else
+    const int mirror_mip = 0;
+#endif
+
     vec3 reflection = trace_specular_ray(
         screen_pos,
         view_pos,
@@ -430,7 +440,7 @@ vec3 get_specular_reflections(
         skylight,
         SSR_INTERSECTION_STEPS_SMOOTH,
         SSR_REFINEMENT_STEPS,
-        0
+        mirror_mip
     );
     reflection *= albedo_tint * fresnel;
 
