@@ -1,0 +1,14 @@
+{
+  "comment": "Scene library for the nocturne bench. time: 0=dawn 6000=noon 12500=dusk 13800=night 18000=midnight. rot: [yaw, pitch]; yaw 0=+Z(south) 90=-X(west) 180=-Z(north) -90=+X(east); pitch negative looks up.",
+  "seed": 1669320484,
+  "scenes": [
+    {
+      "name": "smoke",
+      "seed": 1669320484,
+      "pos": [0, 150, 0],
+      "rot": [0, 10],
+      "time": 6000,
+      "desc": "Smoke-test scene at world origin, noon, high vantage."
+    }
+  ]
+}

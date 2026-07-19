@@ -266,7 +266,10 @@ vec3 trace_specular_ray(
 
         vec3 reflection = textureLod(colortex5, hit_uv_prev, mip_level).rgb;
 
-        vec3 fog_scattering_previous = texture(colortex7, hit_uv_prev).rgb;
+        // NOCTURNE DIAGNOSTIC: fog subtraction bypassed - if the metal
+        // speckle vanishes, the noisy half-res VL buffer term is confirmed.
+        vec3 fog_scattering_previous = vec3(0.0);
+        // vec3 fog_scattering_previous = texture(colortex7, hit_uv_prev).rgb;
 
 #if defined WORLD_OVERWORLD
 #ifdef VL
