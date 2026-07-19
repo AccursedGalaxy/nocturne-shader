@@ -1,14 +1,126 @@
 {
-  "comment": "Scene library for the nocturne bench. time: 0=dawn 6000=noon 12500=dusk 13800=night 18000=midnight. rot: [yaw, pitch]; yaw 0=+Z(south) 90=-X(west) 180=-Z(north) -90=+X(east); pitch negative looks up.",
+  "comment": "Scene library, curated from scout run 20260719-051757 (seed 1669320484). time: 23000=dawn 1000=morning 6000=noon 12300=dusk 15000=night 18000=midnight. rot: [yaw, pitch]; yaw 0=+Z(south) 90=-X(west) 180=-Z(north) 270=+X(east); pitch + looks down.",
   "seed": 1669320484,
   "scenes": [
     {
       "name": "smoke",
       "seed": 1669320484,
-      "pos": [0, 150, 0],
-      "rot": [0, 10],
+      "pos": [
+        0,
+        150,
+        0
+      ],
+      "rot": [
+        0,
+        10
+      ],
       "time": 6000,
       "desc": "Smoke-test scene at world origin, noon, high vantage."
+    },
+    {
+      "name": "V1-hills-noon",
+      "seed": 1669320484,
+      "pos": [
+        0,
+        155,
+        0
+      ],
+      "rot": [
+        0,
+        10
+      ],
+      "time": 6000,
+      "desc": "Rolling green hills, snowy range to the SW, horizon cumulus. Cloud + skylight workload."
+    },
+    {
+      "name": "V2-ocean-dusk",
+      "seed": 1669320484,
+      "pos": [
+        1400,
+        72,
+        300
+      ],
+      "rot": [
+        0,
+        25
+      ],
+      "time": 11800,
+      "desc": "Open ocean with icebergs, low sun glint on water (stock-water mandate check). Sunset atmosphere + SSR."
+    },
+    {
+      "name": "V3-jungle-dawn",
+      "seed": 1669320484,
+      "pos": [
+        0,
+        165,
+        1400
+      ],
+      "rot": [
+        180,
+        15
+      ],
+      "time": 400,
+      "desc": "Jungle hills and river valley at sunrise. Backlit foliage, SSS, crepuscular rays."
+    },
+    {
+      "name": "V4-flowerlake-morning",
+      "seed": 1669320484,
+      "pos": [
+        0,
+        160,
+        -1400
+      ],
+      "rot": [
+        90,
+        14
+      ],
+      "time": 1000,
+      "desc": "Flower forest, misty lake, snowy peaks behind. Morning mie haze + bloomy fog."
+    },
+    {
+      "name": "V5-icepeaks-dusk",
+      "seed": 1669320484,
+      "pos": [
+        1400,
+        175,
+        1400
+      ],
+      "rot": [
+        90,
+        10
+      ],
+      "time": 12300,
+      "desc": "Jagged ice spires at dusk, alpenglow. Shadow + cloud steps stress."
+    },
+    {
+      "name": "V6-night-galaxy",
+      "seed": 1669320484,
+      "pos": [
+        0,
+        160,
+        -1400
+      ],
+      "rot": [
+        180,
+        -18
+      ],
+      "time": 234000,
+      "desc": "Midnight galaxy band + stars over flower forest (day-9 night: clear cloud-noise sample). Purkinje + star/galaxy path."
+    },
+    {
+      "name": "V7-ember-night",
+      "seed": 1669320484,
+      "pos": [
+        -1400,
+        150,
+        0
+      ],
+      "rot": [
+        270,
+        18
+      ],
+      "time": 15000,
+      "desc": "Dark forest with surface lava at night. Warm blocklight vs cool night grade."
     }
   ]
 }
