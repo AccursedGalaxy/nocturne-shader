@@ -271,14 +271,21 @@ vec3 trace_specular_ray(
         // from reflected animated emissives (fire) on gold/iron/copper.
         vec3 reflection;
         if (mip_level < 0) {
-            vec2 ts = 2.0 * view_pixel_size;
-            reflection = 0.2 * (
-                textureLod(colortex5, hit_uv_prev, 0).rgb +
-                textureLod(colortex5, hit_uv_prev + vec2( ts.x, 0.0), 0).rgb +
-                textureLod(colortex5, hit_uv_prev + vec2(-ts.x, 0.0), 0).rgb +
-                textureLod(colortex5, hit_uv_prev + vec2(0.0,  ts.y), 0).rgb +
-                textureLod(colortex5, hit_uv_prev + vec2(0.0, -ts.y), 0).rgb
-            );
+            // 9-tap box, +-4px: wide enough to smear both march banding
+            // and the slats of reflected cutout billboards (fire) into a
+            // soft brushed-metal glow.
+            vec2 ts = 4.0 * view_pixel_size;
+            reflection = vec3(0.0);
+            for (int bx = -1; bx <= 1; ++bx) {
+                for (int by = -1; by <= 1; ++by) {
+                    reflection += textureLod(
+                        colortex5,
+                        hit_uv_prev + vec2(bx, by) * ts,
+                        0
+                    ).rgb;
+                }
+            }
+            reflection *= rcp(9.0);
         } else {
             reflection = textureLod(colortex5, hit_uv_prev, mip_level).rgb;
         }
