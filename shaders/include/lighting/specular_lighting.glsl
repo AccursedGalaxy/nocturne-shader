@@ -315,9 +315,12 @@ vec3 get_specular_reflections(
         material.is_hardcoded_metal ? material.albedo : vec3(1.0);
 
     float alpha_squared = material.roughness * material.roughness;
-    float dither =
-        r1(frameCounter,
-           texelFetch(noisetex, ivec2(gl_FragCoord.xy) & 511, 0).b);
+    // Nocturne: spatial-only dither (was r1(frameCounter, ...)). The
+    // per-frame offset made the march flicker between hit and sky-miss at
+    // reflection edges - permanent crawling grain on glass/metal near
+    // emissives that TAA can't converge. Static blue noise still masks
+    // banding but stays stable frame to frame.
+    float dither = texelFetch(noisetex, ivec2(gl_FragCoord.xy) & 511, 0).b;
 
 #ifdef LOD_MOD_ACTIVE
     // Convert screen depth to combined depth
