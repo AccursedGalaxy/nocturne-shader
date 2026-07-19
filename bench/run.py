@@ -129,35 +129,65 @@ def window_geom(addr):
 WORKSPACE = "name:nbench"
 
 
+def unfocus_game(addr):
+    """Make sure the game window does NOT keep focus: a focused Minecraft
+    captures the mouse, and any physical mouse movement then rotates the
+    in-game camera — which silently ruins the scene's framing."""
+    active = hypr("activewindow", json_out=True) or {}
+    if active.get("address") != addr:
+        return
+    other = next(
+        (
+            c["address"]
+            for c in hypr("clients", json_out=True)
+            if c["address"] != addr and c.get("monitor", -1) != -1
+        ),
+        None,
+    )
+    if other:
+        hypr("dispatch", "focuswindow", f"address:{other}")
+    else:
+        mon = next(
+            (m["name"] for m in hypr("monitors", json_out=True) if m["name"] != OUTPUT),
+            None,
+        )
+        if mon:
+            hypr("dispatch", "focusmonitor", mon)
+
+
 def place_window(addr):
     """Send the window to a dedicated workspace on the headless output and
     fullscreen it there — pixel-exact float placement of xwayland windows
     across outputs proved unreliable. Fullscreening needs focus, so focus
-    is borrowed for a moment and handed straight back."""
+    is borrowed for a moment and always handed off afterwards (see
+    unfocus_game)."""
     prev = hypr("activewindow", json_out=True).get("address")
     hypr("dispatch", "movetoworkspacesilent", f"{WORKSPACE},address:{addr}")
     hypr("dispatch", "moveworkspacetomonitor", f"{WORKSPACE} {OUTPUT}")
-    for attempt in range(10):
-        c = next(
-            (c for c in hypr("clients", json_out=True) if c["address"] == addr),
-            {},
-        )
-        if not c.get("fullscreen"):
-            hypr("dispatch", "focuswindow", f"address:{addr}")
-            hypr("dispatch", "fullscreen", "0")
-            time.sleep(1)
-            if prev and prev != addr:
-                hypr("dispatch", "focuswindow", f"address:{prev}")
+    try:
+        for attempt in range(10):
             c = next(
                 (c for c in hypr("clients", json_out=True) if c["address"] == addr),
                 {},
             )
-        if c.get("fullscreen") and tuple(c.get("size", ())) == RES:
-            log(f"window fullscreen on {OUTPUT} at {c['at']} size {c['size']}")
-            return
-        log(f"fullscreen not settled: at={c.get('at')} size={c.get('size')}, retry")
-        time.sleep(2)
-    raise RuntimeError("window never reached fullscreen 4K on " + OUTPUT)
+            if not c.get("fullscreen"):
+                hypr("dispatch", "focuswindow", f"address:{addr}")
+                hypr("dispatch", "fullscreen", "0")
+                time.sleep(1)
+                if prev and prev != addr:
+                    hypr("dispatch", "focuswindow", f"address:{prev}")
+                c = next(
+                    (c for c in hypr("clients", json_out=True) if c["address"] == addr),
+                    {},
+                )
+            if c.get("fullscreen") and tuple(c.get("size", ())) == RES:
+                log(f"window fullscreen on {OUTPUT} at {c['at']} size {c['size']}")
+                return
+            log(f"fullscreen not settled: at={c.get('at')} size={c.get('size')}, retry")
+            time.sleep(2)
+        raise RuntimeError("window never reached fullscreen 4K on " + OUTPUT)
+    finally:
+        unfocus_game(addr)
 
 
 def screenshot(addr, dest):
@@ -339,6 +369,9 @@ def run_one(sc, shader, out_dir, mode, warmup, duration, shots, prewarm=False):
         meta["t_world"] = time.time()
         if not loaded:
             log("WARN: world-join marker not seen; proceeding on timeout")
+        # re-check now that the world (and mouse capture) exists: a focused
+        # game turns physical mouse motion into camera rotation
+        unfocus_game(addr)
         log(f"world loaded, warming up {warmup}s (chunks + shader compile)")
         time.sleep(warmup)
         meta["t_measure_start"] = time.time()
