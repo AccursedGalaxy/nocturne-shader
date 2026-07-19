@@ -243,6 +243,21 @@
       ],
       "time": 18000,
       "desc": "Zog stall: soul campfire against gold blocks. Reflection-grain repro."
+    },
+    {
+      "name": "grain-A-day",
+      "world": "kathis",
+      "pos": [
+        -181392.0,
+        64.5,
+        180616.0
+      ],
+      "rot": [
+        -133.6,
+        12.0
+      ],
+      "time": 6000,
+      "desc": "grain-A at noon - daytime regression check"
     }
   ]
 }
