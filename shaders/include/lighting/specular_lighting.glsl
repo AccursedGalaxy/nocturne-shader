@@ -451,12 +451,16 @@ vec3 get_specular_reflections(
     const int mirror_mip = 0;
 #endif
 
+    // Nocturne EXPERIMENT: coherent march for the mirror path - the
+    // per-pixel dither decorrelates neighboring rays, turning the
+    // hit/miss boundary at thin geometry into speckle. A constant
+    // mid-step offset makes the boundary a stable coherent edge.
     vec3 reflection = trace_specular_ray(
         screen_pos,
         view_pos,
         world_pos,
         ray_dir,
-        dither,
+        0.5,
         skylight,
         SSR_INTERSECTION_STEPS_SMOOTH,
         SSR_REFINEMENT_STEPS,
