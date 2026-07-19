@@ -388,12 +388,6 @@ vec3 get_specular_reflections(
         if (any(isnan(reflection))) {
             reflection = vec3(0.0); // don't reflect NaNs
         }
-    // NOCTURNE DEBUG BUILD: path tinting, do not release
-#if defined PROGRAM_GBUFFERS_WATER || defined PROGRAM_GBUFFERS_HAND_WATER
-    reflection *= vec3(4.0, 0.1, 0.1); // translucent reflections -> RED
-#else
-    reflection *= vec3(0.1, 4.0, 0.1); // opaque reflections -> GREEN
-#endif
         return clamp_reflected_radiance(reflection) * material.ssr_multiplier;
     }
 #else
@@ -454,12 +448,6 @@ vec3 get_specular_reflections(
         reflection = vec3(0.0); // don't reflect NaNs
     }
 
-    // NOCTURNE DEBUG BUILD: path tinting, do not release
-#if defined PROGRAM_GBUFFERS_WATER || defined PROGRAM_GBUFFERS_HAND_WATER
-    reflection *= vec3(4.0, 0.1, 0.1); // translucent reflections -> RED
-#else
-    reflection *= vec3(0.1, 4.0, 0.1); // opaque reflections -> GREEN
-#endif
     return clamp_reflected_radiance(reflection) * material.ssr_multiplier;
 }
 
