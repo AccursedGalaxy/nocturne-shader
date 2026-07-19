@@ -264,7 +264,28 @@ vec3 trace_specular_ray(
             return sky_reflection;
         }
 
+#if !defined SPECULAR_MAPPING && !defined PROGRAM_GBUFFERS_WATER && !defined PROGRAM_GBUFFERS_HAND_WATER
+        // Nocturne: hardcoded metals - manual 5-tap blur of the hit
+        // radiance. textureLod mip levels on colortex5 are silently
+        // ignored (verified: mip 4 renders identically to mip 0), so the
+        // prefilter must be explicit taps. Kills per-pixel speckle from
+        // reflected animated emissives (fire) on gold/iron/copper.
+        vec3 reflection;
+        if (material.is_metal) {
+            vec2 ts = 2.0 * view_pixel_size;
+            reflection = 0.2 * (
+                textureLod(colortex5, hit_uv_prev, 0).rgb +
+                textureLod(colortex5, hit_uv_prev + vec2( ts.x, 0.0), 0).rgb +
+                textureLod(colortex5, hit_uv_prev + vec2(-ts.x, 0.0), 0).rgb +
+                textureLod(colortex5, hit_uv_prev + vec2(0.0,  ts.y), 0).rgb +
+                textureLod(colortex5, hit_uv_prev + vec2(0.0, -ts.y), 0).rgb
+            );
+        } else {
+            reflection = textureLod(colortex5, hit_uv_prev, mip_level).rgb;
+        }
+#else
         vec3 reflection = textureLod(colortex5, hit_uv_prev, mip_level).rgb;
+#endif
 
         vec3 fog_scattering_previous = texture(colortex7, hit_uv_prev).rgb;
 
