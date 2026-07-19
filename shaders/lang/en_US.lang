@@ -68,11 +68,11 @@ screen.nether_color                    = Static Color
 
 screen.distance_view                   = Distance View
 
-option.INFO                            = §5Photon Nocturne v1.2§r
-value.INFO.0                           = §8moody edit §7· §8base by SixthSurge
-value.INFO.1                           = §8moody edit §7· §8base by SixthSurge
-value.INFO.2                           = §5moody edit §7· §8base by SixthSurge
-value.INFO.3                           = §5moody edit §7· §8base by SixthSurge
+option.INFO                            = About
+value.INFO.0                           = §5Nocturne§7 · base by SixthSurge
+value.INFO.1                           = §5Nocturne§7 · base by SixthSurge
+value.INFO.2                           = §5Nocturne§7 · base by SixthSurge
+value.INFO.3                           = §5Nocturne§7 · base by SixthSurge
 
 # World settings
 
@@ -748,3 +748,50 @@ option.BOX_EMISSION             = Emission
 option.BOX_EMISSION.comment     = Scales color past 1. Requires bloom.
 option.BOX_LINE_WIDTH           = Line Width
 
+
+# ------------------
+#   Nocturne screen
+# ------------------
+
+screen.nocturne                        = §5Nocturne Look§r
+screen.nocturne.comment                = The color grading and mood controls that define this edit. Everything here is safe to play with - Reset restores the Nocturne defaults.
+
+option.INFO.comment                    = Nocturne is a moody performance-tuned edit of Photon Shaders by SixthSurge. This button does nothing - it exists because shaderpacks have no other way to show a credits line. github.com/AccursedGalaxy/nocturne-shader
+profile.comment                        = Performance preset. Changes shadow, reflection and fog quality. Does NOT change the Nocturne look - that lives in the Nocturne Look screen.
+
+option.GRADE_BRIGHTNESS.comment        = Overall image brightness. Nocturne default: 0.97, a touch darker than stock Photon.
+option.GRADE_CONTRAST.comment          = Punch between darks and brights. Higher = moodier, deeper shadows. Nocturne default: 1.12.
+option.GRADE_SATURATION.comment        = Global color intensity. Slightly under 1.00 for the cinematic look. Raise it if the world feels too gray.
+option.GRADE_WHITE_BALANCE.comment     = Color temperature in Kelvin. Below 6500 cools the image toward blue (Nocturne: 6200), above 6500 warms it toward orange.
+option.GRADE_ORANGE_SAT_BOOST.comment  = Extra saturation for orange tones only: torchlight, sunsets, fire, lava. Half of the teal-and-orange film look.
+option.GRADE_TEAL_SAT_BOOST.comment    = Extra saturation for teal tones only: sky, shadows, dusk. The other half of the teal-and-orange film look.
+option.GRADE_GREEN_SAT_BOOST.comment   = Saturation for foliage greens. Nocturne sets this slightly negative to mute Minecraft's loud grass.
+option.GRADE_GREEN_HUE_SHIFT.comment   = Shifts foliage color. Positive = greens lean teal/blue, negative = greens lean yellow.
+option.PURKINJE_SHIFT.comment          = Night vision effect: in darkness, colors fade toward blue-gray like real human night vision.
+option.PURKINJE_SHIFT_INTENSITY.comment = How strong the night desaturation is. Higher = darker, bluer, moodier nights. Nocturne default: 1.20.
+option.tonemap.comment                 = How bright light compresses to screen colors. Lottes (Nocturne default) is soft and filmic. ACES is punchier, Reinhard is flat.
+
+option.VIGNETTE_INTENSITY.comment      = Darkens the screen corners. Part of the moody framing; set to 0 to disable.
+option.BLOOM_INTENSITY.comment         = Glow around bright light sources.
+option.OVERWORLD_FOG_INTENSITY.comment = Overall fog amount in the overworld. Nocturne runs 1.20 for hazier mornings and evenings.
+option.BLOOMY_FOG.comment              = Lets fog glow softly around lights instead of just graying things out.
+option.BLOOMY_FOG_INTENSITY.comment    = How strongly fog glows. Nocturne default: 1.2.
+option.VL.comment                      = Volumetric light: fog you can see sunbeams in. Costs roughly 10% of frame time. Turning it off flattens the atmosphere a lot.
+
+option.STARS_INTENSITY.comment         = Star brightness at night. Nocturne: 1.30.
+option.STARS_COVERAGE.comment          = How much of the sky has stars.
+option.GALAXY.comment                  = Faint galaxy band across the night sky. Basically free, very Nocturne.
+option.GALAXY_INTENSITY.comment        = Galaxy brightness.
+option.AURORA_NORMAL.comment           = Auroras outside snowy biomes. Nocturne sets Rarely: an occasional night surprise.
+
+option.SUN_I.comment                   = Sunlight strength. Nocturne runs 0.90 for softer days.
+option.MOON_I.comment                  = Moonlight strength.
+option.BLOCKLIGHT_I.comment            = Torch/lantern/fire light strength. Nocturne runs 1.10 with a warm ember tint.
+option.SKYLIGHT_I.comment              = Ambient sky light. Lower = deeper shadows in the open.
+option.CAVE_LIGHTING_I.comment         = Ambient light underground. Nocturne runs 0.85 for moodier caves.
+
+option.shadowMapResolution.comment     = Shadow sharpness. 2048 is the sweet spot; higher costs GPU fast and mostly sharpens distant shadows.
+option.CLOUDS_TEMPORAL_UPSCALING.comment = Clouds render at reduced resolution and accumulate over several frames. Higher = faster but more ghosting when panning. 4 is the tested default.
+option.CLOUDS_CUMULUS_COVERAGE.comment = How much of the sky the low cloud layer fills. Nocturne runs 1.10 for heavier skies.
+option.CLOUDS_CUMULUS_DENSITY.comment  = How thick the low clouds look.
+option.FXAA.comment                    = Extra edge smoothing after TAA. Nocturne ships it OFF: TAA already covers it and the image is sharper without it.
