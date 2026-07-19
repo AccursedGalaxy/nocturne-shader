@@ -121,6 +121,113 @@
       ],
       "time": 15000,
       "desc": "Dark forest with surface lava at night. Warm blocklight vs cool night grade."
+    },
+    {
+      "name": "victorian-dusk",
+      "world": "victorian",
+      "pos": [
+        -219.6,
+        32.0,
+        -98.2
+      ],
+      "rot": [
+        120.10000000000002,
+        -7.9
+      ],
+      "time": 12300,
+      "desc": "Robin's viewpoint at the Victorian house"
+    },
+    {
+      "name": "victorian-midnight",
+      "world": "victorian",
+      "pos": [
+        -219.6,
+        32.0,
+        -98.2
+      ],
+      "rot": [
+        120.10000000000002,
+        -7.9
+      ],
+      "time": 234000,
+      "desc": "Robin's viewpoint at the Victorian house"
+    },
+    {
+      "name": "victorian-night",
+      "world": "victorian",
+      "pos": [
+        -219.6,
+        32.0,
+        -98.2
+      ],
+      "rot": [
+        120.10000000000002,
+        -7.9
+      ],
+      "time": 15000,
+      "desc": "Robin's viewpoint at the Victorian house"
+    },
+    {
+      "name": "victorian-noon",
+      "world": "victorian",
+      "pos": [
+        -219.6,
+        32.0,
+        -98.2
+      ],
+      "rot": [
+        120.10000000000002,
+        -7.9
+      ],
+      "time": 6000,
+      "desc": "Robin's viewpoint at the Victorian house"
+    },
+    {
+      "name": "victorian-rain-dusk",
+      "world": "victorian",
+      "pos": [
+        -219.6,
+        32.0,
+        -98.2
+      ],
+      "rot": [
+        120.10000000000002,
+        -7.9
+      ],
+      "time": 12300,
+      "desc": "Robin's viewpoint at the Victorian house",
+      "weather": "rain"
+    },
+    {
+      "name": "victorian-rain-noon",
+      "world": "victorian",
+      "pos": [
+        -219.6,
+        32.0,
+        -98.2
+      ],
+      "rot": [
+        120.10000000000002,
+        -7.9
+      ],
+      "time": 6000,
+      "desc": "Robin's viewpoint at the Victorian house",
+      "weather": "rain"
+    },
+    {
+      "name": "victorian-sunrise",
+      "world": "victorian",
+      "pos": [
+        -219.6,
+        32.0,
+        -98.2
+      ],
+      "rot": [
+        120.10000000000002,
+        -7.9
+      ],
+      "time": 1200,
+      "desc": "Robin's viewpoint at the Victorian house"
     }
   ]
 }
