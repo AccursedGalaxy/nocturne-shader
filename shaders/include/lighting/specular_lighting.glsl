@@ -80,8 +80,10 @@ vec3 get_specular_highlight(
     float LoH
 ) {
     const float specular_max_value =
-        4.0; // Maximum value imposed on specular highlight to prevent it from
-             // overloading bloom
+        10.0; // Maximum value imposed on specular highlight to prevent it
+              // from overloading bloom. Nocturne: raised from 4.0 - the low
+              // clamp flattened sun glints into uniform discs; a hotter core
+              // with GGX falloff reads as a glint, not a sticker.
 
 #if defined WORLD_OVERWORLD
     const float sun_angular_radius = SUN_ANGULAR_RADIUS * degree;
