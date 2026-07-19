@@ -84,11 +84,6 @@ def hypr(*args, json_out=False):
 
 
 def ensure_output():
-    # Prism is single-instance: every CLI launch asks its GUI window to
-    # raise, yanking the user to that workspace. Suppress app-initiated
-    # activation (user clicks still focus it normally).
-    hypr("keyword", "windowrulev2",
-         r"suppressevent activate, class:^(org\.prismlauncher\.PrismLauncher)$")
     mons = hypr("monitors", json_out=True)
     if not any(m["name"] == OUTPUT for m in mons):
         hypr("output", "create", "headless", OUTPUT)

@@ -228,51 +228,6 @@
       ],
       "time": 1200,
       "desc": "Robin's viewpoint at the Victorian house"
-    },
-    {
-      "name": "grain-A",
-      "world": "kathis",
-      "pos": [
-        -181392.0,
-        64.5,
-        180616.0
-      ],
-      "rot": [
-        -133.6,
-        12.0
-      ],
-      "time": 18000,
-      "desc": "framing candidate"
-    },
-    {
-      "name": "grain-B",
-      "world": "kathis",
-      "pos": [
-        -181390.0,
-        64.2,
-        180611.0
-      ],
-      "rot": [
-        -80.0,
-        10.0
-      ],
-      "time": 18000,
-      "desc": "framing candidate"
-    },
-    {
-      "name": "grain-C",
-      "world": "kathis",
-      "pos": [
-        -181386.0,
-        64.5,
-        180617.5
-      ],
-      "rot": [
-        -170.0,
-        12.0
-      ],
-      "time": 18000,
-      "desc": "framing candidate"
     }
   ]
 }
