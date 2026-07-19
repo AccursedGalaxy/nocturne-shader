@@ -1,5 +1,5 @@
 {
-  "comment": "Scene library, curated from scout run 20260719-051757 (seed 1669320484). time: 23000=dawn 1000=morning 6000=noon 12300=dusk 15000=night 18000=midnight. rot: [yaw, pitch]; yaw 0=+Z(south) 90=-X(west) 180=-Z(north) 270=+X(east); pitch + looks down.",
+  "comment": "Scene library, curated from scout run 20260719-051757 (seed 1669320484). time: 23000=dawn 1000=morning 6000=noon 12300=dusk 15000=night 18000=midnight. rot: [yaw, pitch]; yaw 0=+Z(south) 90=-X(west) 180=-Z(north) 270=+X(east); pitch + looks down. | NOTE: grain-* scenes belong to the reflection-artifact debug session - please preserve them when editing.",
   "seed": 1669320484,
   "scenes": [
     {
@@ -228,6 +228,21 @@
       ],
       "time": 1200,
       "desc": "Robin's viewpoint at the Victorian house"
+    },
+    {
+      "name": "grain-A",
+      "world": "kathis",
+      "pos": [
+        -181392.0,
+        64.5,
+        180616.0
+      ],
+      "rot": [
+        -133.6,
+        12.0
+      ],
+      "time": 18000,
+      "desc": "Zog stall: soul campfire against gold blocks. Reflection-grain repro."
     }
   ]
 }

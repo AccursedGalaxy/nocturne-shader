@@ -264,14 +264,13 @@ vec3 trace_specular_ray(
             return sky_reflection;
         }
 
-#if !defined SPECULAR_MAPPING && !defined PROGRAM_GBUFFERS_WATER && !defined PROGRAM_GBUFFERS_HAND_WATER
-        // Nocturne: hardcoded metals - manual 5-tap blur of the hit
-        // radiance. textureLod mip levels on colortex5 are silently
-        // ignored (verified: mip 4 renders identically to mip 0), so the
-        // prefilter must be explicit taps. Kills per-pixel speckle from
-        // reflected animated emissives (fire) on gold/iron/copper.
+        // Nocturne: mip_level < 0 requests a manual 5-tap blur of the hit
+        // radiance (used for hardcoded metals). textureLod mip levels on
+        // colortex5 are silently ignored (verified: mip 4 == mip 0), so
+        // the prefilter must be explicit taps. Kills per-pixel speckle
+        // from reflected animated emissives (fire) on gold/iron/copper.
         vec3 reflection;
-        if (material.is_metal) {
+        if (mip_level < 0) {
             vec2 ts = 2.0 * view_pixel_size;
             reflection = 0.2 * (
                 textureLod(colortex5, hit_uv_prev, 0).rgb +
@@ -283,9 +282,6 @@ vec3 trace_specular_ray(
         } else {
             reflection = textureLod(colortex5, hit_uv_prev, mip_level).rgb;
         }
-#else
-        vec3 reflection = textureLod(colortex5, hit_uv_prev, mip_level).rgb;
-#endif
 
         vec3 fog_scattering_previous = texture(colortex7, hit_uv_prev).rgb;
 
@@ -443,19 +439,14 @@ vec3 get_specular_reflections(
     float v2 = v2_smith_ggx(NoL, NoV, alpha_squared);
 
 #if defined PROGRAM_GBUFFERS_WATER || defined PROGRAM_GBUFFERS_HAND_WATER
-    // Nocturne: glass and other non-water translucents reflect a
-    // prefiltered mip of the scene. One grazing ray per pixel over a
-    // high-contrast target (fire on dark blocks) speckles hard at mip 0,
-    // and glass is not a perfect mirror anyway. Water stays at mip 0.
-    int mirror_mip = is_water ? 0 : 2;
+    // Nocturne: glass and other non-water translucents get the manual
+    // 5-tap prefilter (mip_level=-1 sentinel). Water stays sharp (0).
+    int mirror_mip = is_water ? 0 : -1;
 #elif !defined SPECULAR_MAPPING
-    // Nocturne: hardcoded metals (gold, iron, copper blocks) get a
-    // prefiltered reflection too. Their per-texel smoothness heuristic
-    // plus a single mirror ray reflecting animated emissives produces
-    // hard speckle (confirmed via path-tint debug: opaque pass). Real
-    // metal blocks are brushed, not mirror-polished. With a labPBR pack
-    // (SPECULAR_MAPPING) the proper rough path handles this instead.
-    int mirror_mip = material.is_metal ? 2 : 0;
+    // Nocturne: hardcoded metals get the 5-tap prefilter - a single
+    // mirror ray reflecting animated emissives speckles per pixel.
+    // labPBR packs (SPECULAR_MAPPING) use the proper rough path instead.
+    int mirror_mip = material.is_metal ? -1 : 0;
 #else
     const int mirror_mip = 0;
 #endif
