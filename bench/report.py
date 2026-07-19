@@ -174,24 +174,33 @@ def build(run_dir, baseline=None):
 
     (run_dir / "REPORT.md").write_text("\n".join(lines) + "\n")
 
-    # gallery
-    imgs = []
+    # gallery: one row per scene, shaders side by side for A/B eyeballing
+    by_scene = {}
     for sh in shaders:
-        for sc in sorted(sh.glob("*/shot-*.png")):
-            imgs.append((sh.name, sc.parent.name, sc.relative_to(run_dir)))
+        for shot in sorted(sh.glob("*/shot-*.png")):
+            by_scene.setdefault(shot.parent.name, []).append(
+                (sh.name, shot.relative_to(run_dir))
+            )
+    n_shaders = max((len(v) for v in by_scene.values()), default=1)
     html = [
         "<!doctype html><meta charset=utf-8>",
         f"<title>nocturne bench — {run_dir.name}</title>",
-        "<style>body{font-family:sans-serif;background:#111;color:#eee}"
-        "img{max-width:100%;border-radius:6px}"
-        "figure{margin:2em 0}figcaption{margin:.5em 0;opacity:.8}</style>",
+        "<style>body{font-family:sans-serif;background:#111;color:#eee;"
+        "margin:2em}img{width:100%;border-radius:6px}"
+        f".row{{display:grid;grid-template-columns:repeat({n_shaders},1fr);"
+        "gap:12px;margin:0 0 2.5em}"
+        "figure{margin:0}figcaption{margin:.4em 0;opacity:.8;"
+        "font-size:.9em}h2{margin:.2em 0 .6em}</style>",
         f"<h1>{run_dir.name}</h1>",
     ]
-    for sh, sc, rel in imgs:
-        html.append(
-            f"<figure><figcaption>{sh} — {sc}</figcaption>"
-            f"<a href='{rel}'><img src='{rel}' loading=lazy></a></figure>"
-        )
+    for scene in sorted(by_scene):
+        html.append(f"<h2>{scene}</h2><div class=row>")
+        for sh, rel in by_scene[scene]:
+            html.append(
+                f"<figure><figcaption>{sh}</figcaption>"
+                f"<a href='{rel}'><img src='{rel}' loading=lazy></a></figure>"
+            )
+        html.append("</div>")
     (run_dir / "gallery.html").write_text("\n".join(html))
     print(run_dir / "REPORT.md")
     print(run_dir / "gallery.html")
