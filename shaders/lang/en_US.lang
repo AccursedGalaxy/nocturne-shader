@@ -68,11 +68,11 @@ screen.nether_color                    = Static Color
 
 screen.distance_view                   = Distance View
 
-option.INFO                            = Photon Shaders
-value.INFO.0                           = §eby SixthSurge
-value.INFO.1                           = §aby SixthSurge
-value.INFO.2                           = §bby SixthSurge
-value.INFO.3                           = §dby SixthSurge
+option.INFO                            = §5Photon Nocturne§r
+value.INFO.0                           = §8moody edit §7· §8base by SixthSurge
+value.INFO.1                           = §8moody edit §7· §8base by SixthSurge
+value.INFO.2                           = §5moody edit §7· §8base by SixthSurge
+value.INFO.3                           = §5moody edit §7· §8base by SixthSurge
 
 # World settings
 
