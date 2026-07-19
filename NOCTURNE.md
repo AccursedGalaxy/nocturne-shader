@@ -43,3 +43,67 @@ sliders in Shader Pack Settings show Nocturne values as the starting point.
 ## Credits
 - Base shader: Photon by SixthSurge (see LICENSE)
 - Nocturne edit: Robin
+
+---
+
+# v1.1 — performance pass (2026-07-19)
+
+Council-reviewed (critic: GPT-5.6-sol, 3 rounds). Motivation: session
+telemetry showed the RX 6800 XT fully pinned (median 99% busy, ~238 W,
+100 °C hotspot) — cloud march cost converts directly to fps and heat.
+
+**Status: PENDING in-game acceptance.** These are new defaults, not
+validated results. No fps number is claimed until measured (protocol below).
+v1.0 stays in shaderpacks/ as instant rollback.
+
+## Changed defaults (all remain in-game sliders)
+
+| Change | Setting | v1.0 | v1.1 |
+|---|---|---|---|
+| C1 clouds | CLOUDS_CUMULUS_PRIMARY_STEPS_H / _Z | 40 / 20 | 32 / 16 |
+| C1 clouds | CLOUDS_CUMULUS_CONGESTUS_PRIMARY_STEPS | 20 | 16 |
+| C1 clouds | CLOUDS_ALTOCUMULUS_PRIMARY_STEPS_H / _Z | 12 / 6 | 10 / 5 |
+| C1 clouds | CUMULUS / CONGESTUS _LIGHTING_STEPS | 6 / 6 | 5 / 5 |
+| C3 contact shadows | SHADOW_SSRT_STEPS | 10 | 8 |
+| C4 subsurface | SSS_STEPS | 12 | 10 |
+
+Dropped from the pass: SSR_INTERSECTION_STEPS_ROUGH (stays 8) — inert under
+default settings (rough SSR branch only compiles with SPECULAR_MAPPING +
+labPBR pack; water is guarded by `if (!is_water)` and always uses the smooth
+path). Changing it risked an untested behavior change for zero gain.
+**No SSR or water value differs from v1.0.**
+
+## If something looks off — symptom → one slider
+
+| Symptom | Restore (Shader Pack Settings) |
+|---|---|
+| Cloud banding at horizon | Sky → Clouds → Cumulus → Primary Steps H → 40 |
+| Cloud banding overhead | ... Primary Steps Z → 20 |
+| Cloud shimmer/ghosting on fast pans | both of the above |
+| Dark/flickery cloud undersides | Lighting Steps → 6 |
+| Shadow gaps at object bases | Lighting → Shadows → SSRT Steps → 10 |
+| Foliage/skin backlight stepping | Lighting → Shadows → SSS Steps → 12 |
+
+## If fps still tanks — opt-in levers (not defaults)
+
+1. Post-Processing → TAAU + render scale 0.75 (~big win, softens image).
+2. Lighting → Shadows → Entity Shadows OFF (entity-heavy bases).
+
+## Acceptance runs (to do in-game, per change)
+
+Stages: C1 sliders only → scenes V1 day horizon clouds, V2 zenith, V4 fast
+360° pans day+dusk; C3 only → V5 low-sun long shadows + object bases; C4
+only → V3 sunrise/sunset backlit foliage + a mob; combined → V6 night
+fog/blocklight/stars sweep. Frame-time A/B via MangoHud CSVs (perflogs/,
+Shift+F2; interleave v1.0/v1.1 runs, 60 s warm-up, compare median + 1% low;
+≥3% median improvement before any fps number is written here).
+
+## Provenance
+
+Source: Photon Nocturne v1.0.zip
+sha256 71b65e7eb8d804c56e1a27adecb13c460b15b8a4e6d43297920b68d1979849d5.
+Patch: tools/nocturne-v1.1.patch.py (in this zip; asserts every edit
+matches exactly once). Files changed vs v1.0: shaders/settings.glsl,
+shaders/lang/en_US.lang, NOCTURNE.md, + added tools/. The v1.1 zip's own
+sha256 is published next to it as "Photon Nocturne v1.1.zip.sha256" (a zip
+cannot contain its own hash).
